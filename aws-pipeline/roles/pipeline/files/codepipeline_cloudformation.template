@@ -1,0 +1,196 @@
+{
+    "Description": "Portfolio pipeline template",
+    "Resources": {
+        "PortfolioPipeline": {
+            "Properties": {
+                "ArtifactStore": {
+                    "Location": {
+                        "Ref": "S3Bucket"
+                    },
+                    "Type": "S3"
+                },
+                "RoleArn": {
+                    "Fn::GetAtt": [
+                        "PortfolioPipelineRole",
+                        "Arn"
+                    ]
+                },
+                "Stages": [
+                    {
+                        "Actions": [
+                            {
+                                "ActionTypeId": {
+                                    "Category": "Source",
+                                    "Owner": "ThirdParty",
+                                    "Provider": "GitHub",
+                                    "Version": "1"
+                                },
+                                "Configuration": {
+                                    "Branch": "ToBeConfiguredLater",
+                                    "OAuthToken": "ToBeConfiguredLater",
+                                    "Owner": "ToBeConfiguredLater",
+                                    "Repo": "ToBeConfiguredLater"
+                                },
+                                "Name": "Source",
+                                "OutputArtifacts": [
+                                    {
+                                        "Name": "Portfolio"
+                                    }
+                                ]
+                            }
+                        ],
+                        "Name": "Source"
+                    },
+                    {
+                        "Actions": [
+                            {
+                                "ActionTypeId": {
+                                    "Category": "Test",
+                                    "Owner": "Custom",
+                                    "Provider": "Jenkins-Portfolio",
+                                    "Version": "1"
+                                },
+                                "Configuration": {
+                                    "ProjectName": "Portfolio"
+                                },
+                                "InputArtifacts": [
+                                    {
+                                        "Name": "Portfolio"
+                                    }
+                                ],
+                                "Name": "Test",
+                                "Region": "us-east-2"
+                            }
+                        ],
+                        "Name": "Test"
+                    },
+                    {
+                        "Actions": [
+                            {
+                                "ActionTypeId": {
+                                    "Category": "Deploy",
+                                    "Owner": "AWS",
+                                    "Provider": "CodeDeploy",
+                                    "Version": "1"
+                                },
+                                "Configuration": {
+                                    "ApplicationName": "portfolio",
+                                    "DeploymentGroupName": "staging-portfolio"
+                                },
+                                "InputArtifacts": [
+                                    {
+                                        "Name": "Portfolio"
+                                    }
+                                ],
+                                "Name": "Deploy"
+                            }
+                        ],
+                        "Name": "Staging"
+                    },
+                    {
+                        "Actions": [
+                            {
+                                "ActionTypeId": {
+                                    "Category": "Approval",
+                                    "Owner": "AWS",
+                                    "Provider": "Manual",
+                                    "Version": "1"
+                                },
+                                "Configuration": {},
+                                "InputArtifacts": [],
+                                "Name": "Approval"
+                            }
+                        ],
+                        "Name": "Approval"
+                    },
+                    {
+                        "Actions": [
+                            {
+                                "ActionTypeId": {
+                                    "Category": "Deploy",
+                                    "Owner": "AWS",
+                                    "Provider": "CodeDeploy",
+                                    "Version": "1"
+                                },
+                                "Configuration": {
+                                    "ApplicationName": "portfolio",
+                                    "DeploymentGroupName": "production-portfolio"
+                                },
+                                "InputArtifacts": [
+                                    {
+                                        "Name": "Portfolio"
+                                    }
+                                ],
+                                "Name": "Deploy"
+                            }
+                        ],
+                        "Name": "Production"
+                    }
+                ]
+            },
+            "Type": "AWS::CodePipeline::Pipeline"
+        },
+        "PortfolioPipelineRole": {
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "codepipeline.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "Policies": [
+                    {
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": "cloudformation:*",
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Action": "codedeploy:*",
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Action": "codepipeline:*",
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Action": "iam:*",
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Action": "s3:*",
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                }
+                            ]
+                        },
+                        "PolicyName": "PortfolioCodePipeline"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::Role"
+        },
+        "S3Bucket": {
+            "Properties": {
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                }
+            },
+            "Type": "AWS::S3::Bucket"
+        }
+    }
+}

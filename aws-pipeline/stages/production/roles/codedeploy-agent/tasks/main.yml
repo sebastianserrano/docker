@@ -1,0 +1,33 @@
+---
+# tasks file for codedeploy
+
+- name: Upgrade all packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: Install ruby
+  yum:
+    name: ruby
+    state: present
+
+- name: Download codedeploy agent
+  get_url:
+    url: https://aws-codedeploy-us-east-2.s3.us-east-2.amazonaws.com/latest/install
+    dest: /home/ec2-user
+
+- name: Change codedeploy permissions
+  file:
+    path: /home/ec2-user/install
+    mode: u=rwx
+
+- name: Install codedeploy agent
+  shell: ./install auto
+  args:
+    chdir: /home/ec2-user
+
+- name: Check codedeploy agent service is up
+  service:
+    name: codedeploy-agent
+    state: started
+    enabled: yes

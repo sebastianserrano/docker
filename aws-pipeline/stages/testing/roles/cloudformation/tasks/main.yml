@@ -1,0 +1,39 @@
+---
+# tasks file for create-server
+- name: Create testing server via cloudformation
+  shell: >-
+    aws cloudformation create-stack 
+    --capabilities CAPABILITY_IAM 
+    --stack-name testing-server-portfolio 
+    --template-body file://testing-server.template 
+    --parameters ParameterKey=KeyPair,ParameterValue=portfolio
+  args:
+    executable: /bin/bash
+    chdir: roles/cloudformation/files/
+
+- name: Wait for testing server creation
+  shell: >-
+    aws cloudformation wait 
+    stack-create-complete 
+    --stack-name testing-server-portfolio
+
+- name: Query testing server public ip
+  shell: >-
+    aws cloudformation describe-stacks 
+    --stack-name testing-server-portfolio
+    --query "Stacks[0].Outputs[0].OutputValue"
+  register: testing_server
+
+- name: Strip leading and trailing double quotes 
+  shell: sed -e 's/^"//' -e 's/"$//'
+  args:
+    stdin: "{{ testing_server.stdout }}"
+  register: testing_server_public_ip
+
+- debug:
+    msg: "This is my staging server public ip {{ testing_server_public_ip.stdout }}"
+
+- name: Save testing host ip in dynamic inventory
+  add_host:
+    name: "{{ testing_server_public_ip.stdout }}"
+    groups: testing

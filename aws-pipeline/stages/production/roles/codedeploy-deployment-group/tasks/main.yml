@@ -1,0 +1,27 @@
+---
+# tasks file for codedeploy-deployment-group
+#
+
+- name: Query service role arn
+  shell: >-
+    aws iam list-roles 
+    --query "Roles[?RoleName == 'PortfolioCodeDeployServiceRole'].[RoleName, Arn][0][1]"
+  register: service_role
+
+- name: Strip leading and trailing double quotes of service role
+  shell: sed -e 's/^"//' -e 's/"$//'
+  args:
+    stdin: "{{ service_role.stdout }}"
+  register: service_role_arn
+
+- debug:
+    msg: "This is my production server public ip {{ service_role_arn.stdout }}"
+
+- name: Create deployment group
+  shell: >-
+    aws deploy create-deployment-group 
+    --application-name portfolio 
+    --ec2-tag-filters Key=aws:cloudformation:stack-name,Type=KEY_AND_VALUE,Value=production-server-portfolio
+    --deployment-group-name production-portfolio
+    --service-role-arn "{{ service_role_arn.stdout }}"
+    --auto-rollback-configuration enabled=true,events=DEPLOYMENT_FAILURE

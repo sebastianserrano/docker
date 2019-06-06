@@ -1,0 +1,13 @@
+---
+- hosts: "{{ target | default('localhost') }}"
+  gather_facts: False
+  roles:
+    - cloudformation
+    - codedeploy-deployment-group
+
+- hosts: production
+  become: yes
+  gather_facts: False
+  roles:
+    - nodejs
+    - codedeploy-agent

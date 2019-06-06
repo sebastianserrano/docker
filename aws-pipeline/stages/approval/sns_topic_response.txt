@@ -1,0 +1,1 @@
+{"TopicArn": "arn:aws:sns:us-east-2:047055806327:portfolio-deploy-approval"}

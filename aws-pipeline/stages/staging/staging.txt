@@ -1,0 +1,5 @@
+1. Create IAM service role for CodeDeploy
+2. Attach role AWS code deploy policy to service role
+3. Create staging server
+	3.1 Configure node and npm
+	3.2 Install and start code deploy agent

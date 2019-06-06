@@ -1,0 +1,47 @@
+---
+# tasks file for jenkins
+#
+- name: Removing old version of JAVA from Amazon Linux
+  yum:
+    name: 'java-1.7.0-openjdk'
+    state: absent
+
+- name: Install specific supported version of JAVA
+  yum:
+    name: 'java-1.8.0-openjdk'
+    state: present
+
+- name: Add Jenkins repository
+  get_url:
+    url: https://pkg.jenkins.io/redhat/jenkins.repo
+    dest: /etc/yum.repos.d/jenkins.repo
+
+- name: Import Jenkins GPG Key
+  rpm_key:
+    state: present
+    key: https://pkg.jenkins.io/redhat/jenkins.io.key
+
+- name: Install Jenkins
+  yum:
+    name: 'jenkins-2.99'
+    state: present
+  async: 1000
+  poll: 0
+  register: yum_jenkins_sleeper
+
+- name: 'YUM - check on jenkins install async task'
+  async_status:
+    jid: "{{ yum_jenkins_sleeper.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 30
+
+- name: Start Jenkins
+  service:
+    name: jenkins
+    enabled: yes
+    state: started
+
+
+
+

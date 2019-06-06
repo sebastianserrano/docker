@@ -1,0 +1,33 @@
+---
+# tasks file for sns
+#
+- name: Create sns topic
+  shell: >-
+    aws sns create-topic 
+    --name portfolio-deploy-approval
+  register: sns_topic_response
+
+- name: Write sns topic response to file
+  copy:                                                                                              
+     content: "{{ sns_topic_response.stdout }}" 
+     dest: "./sns_topic_response.txt"
+
+- name: Retrieve arn from sns response json
+  shell: cat sns_topic_response.txt | jq '.TopicArn'
+  register: sns_topic
+  args:
+    executable: /bin/bash
+
+- name: Strip leading and trailing double quotes 
+  shell: sed -e 's/^"//' -e 's/"$//'
+  args:
+    stdin: "{{ sns_topic.stdout }}"
+  register: sns_topic_arn
+
+- name: Subscribe to sns portfolio deploy approval topic
+  shell: >-
+    aws sns subscribe --topic-arn
+    "{{ sns_topic_arn.stdout }}"
+    --protocol email
+    --notification-endpoint sebastianjuan1994@gmail.com
+

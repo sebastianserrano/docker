@@ -1,0 +1,11 @@
+---
+- hosts: "{{ target | default('localhost') }}"
+  gather_facts: False
+  roles:
+    - cloudformation
+
+- hosts: testing
+  become: yes
+  gather_facts: False
+  roles:
+    - jenkins

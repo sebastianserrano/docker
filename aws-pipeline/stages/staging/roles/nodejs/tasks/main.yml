@@ -1,0 +1,18 @@
+---
+# tasks file for nodejs
+#
+
+- name: Enable epel releases with amazon linux extras
+  shell: amazon-linux-extras enable epel
+  args:
+    executable: /bin/bash
+
+- name: Installing epel-release
+  yum:
+    name: 'epel-release'
+    state: present
+
+- name: Installing node
+  yum:
+    name: 'nodejs'
+    state: present

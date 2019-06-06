@@ -1,0 +1,18 @@
+---
+# tasks file for pipeline
+- name: Create pipeline via cloudformation
+  shell: >-
+    aws cloudformation create-stack 
+    --capabilities CAPABILITY_IAM 
+    --stack-name portfolio-pipeline
+    --template-body file://codepipeline_cloudformation.template 
+    --parameters ParameterKey=KeyPair,ParameterValue=portfolio
+  args:
+    executable: /bin/bash
+    chdir: roles/pipeline/files/
+
+- name: Wait for pipeline creation
+  shell: >-
+    aws cloudformation wait 
+    stack-create-complete 
+    --stack-name portfolio-pipeline

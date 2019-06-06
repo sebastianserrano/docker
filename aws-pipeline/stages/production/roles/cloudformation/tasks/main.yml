@@ -1,0 +1,40 @@
+---
+# tasks file for cloudformation
+#
+- name: Create production server via cloudformation
+  shell: >-
+    aws cloudformation create-stack 
+    --capabilities CAPABILITY_IAM 
+    --stack-name production-server-portfolio 
+    --template-body file://production-server.template 
+    --parameters ParameterKey=KeyPair,ParameterValue=portfolio
+  args:
+    executable: /bin/bash
+    chdir: roles/cloudformation/files/
+
+- name: Wait for production server creation
+  shell: >-
+    aws cloudformation wait 
+    stack-create-complete 
+    --stack-name production-server-portfolio
+
+- name: Query production server public ip
+  shell: >-
+    aws cloudformation describe-stacks 
+    --stack-name production-server-portfolio
+    --query "Stacks[0].Outputs[0].OutputValue"
+  register: staging_server
+
+- name: Strip leading and trailing double quotes 
+  shell: sed -e 's/^"//' -e 's/"$//'
+  args:
+    stdin: "{{ staging_server.stdout }}"
+  register: staging_server_public_ip
+
+- debug:
+    msg: "This is my production server public ip {{ staging_server_public_ip.stdout }}"
+
+- name: Save production host ip in dynamic inventory
+  add_host:
+    name: "{{ staging_server_public_ip.stdout }}"
+    groups: production

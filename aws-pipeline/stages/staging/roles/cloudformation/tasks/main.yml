@@ -1,0 +1,40 @@
+---
+# tasks file for cloudformation
+#
+- name: Create staging server via cloudformation
+  shell: >-
+    aws cloudformation create-stack 
+    --capabilities CAPABILITY_IAM 
+    --stack-name staging-server-portfolio 
+    --template-body file://staging-server.template 
+    --parameters ParameterKey=KeyPair,ParameterValue=portfolio
+  args:
+    executable: /bin/bash
+    chdir: roles/cloudformation/files/
+
+- name: Wait for staging server creation
+  shell: >-
+    aws cloudformation wait 
+    stack-create-complete 
+    --stack-name staging-server-portfolio
+
+- name: Query staging server public ip
+  shell: >-
+    aws cloudformation describe-stacks 
+    --stack-name staging-server-portfolio
+    --query "Stacks[0].Outputs[0].OutputValue"
+  register: staging_server
+
+- name: Strip leading and trailing double quotes 
+  shell: sed -e 's/^"//' -e 's/"$//'
+  args:
+    stdin: "{{ staging_server.stdout }}"
+  register: staging_server_public_ip
+
+- debug:
+    msg: "This is my staging server public ip {{ staging_server_public_ip.stdout }}"
+
+- name: Save staging host ip in dynamic inventory
+  add_host:
+    name: "{{ staging_server_public_ip.stdout }}"
+    groups: staging

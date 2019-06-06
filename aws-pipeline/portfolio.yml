@@ -1,0 +1,11 @@
+---
+- name: Start pipeline stages creation
+  import_playbook: stages/staging/staging.yml
+  import_playbook: stages/testing/testing.yml
+  import_playbook: stages/approval/approval.yml
+  import_playbook: stages/production/production.yml
+
+- hosts: "{{ target | default('localhost') }}"
+  gather_facts: False
+  roles:
+    - pipeline
