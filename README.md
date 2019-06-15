@@ -10,13 +10,12 @@
 ## Build
 
 ```sh
-docker build -t "tag" .
+docker build -t "image:tag" .
 ```
 
 ## Usage
 
 ```sh
-npm run start
 docker container run -it "image:tag"
 ```
 
